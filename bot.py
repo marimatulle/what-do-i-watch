@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+GUILD_ID = os.getenv("GUILD_ID")
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
@@ -51,12 +52,12 @@ async def check_permissions(ctx, embed=False):
         return False
     return True
 
-@bot.command()
+@bot.slash_command(name="ping", description="Responde Pong!", guild_ids=[GUILD_ID])
 async def ping(ctx):
     if await check_permissions(ctx):
-        await ctx.send("🏓 Pong!")
+        await ctx.respond("🏓 Pong!")
 
-@bot.slash_command(name="randommovie", description="Sorteia um filme aleatório")
+@bot.slash_command(name="randommovie", description="Sorteia um filme aleatório", guild_ids=[GUILD_ID])
 async def randommovie(ctx, genre: str = None):
     if not await check_permissions(ctx, embed=True):
         return
