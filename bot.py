@@ -2,13 +2,14 @@ import os
 import random
 import requests
 import discord
+import json
 from discord.ext import commands
+from discord import option
 from dotenv import load_dotenv
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
-GUILD_ID = os.getenv("GUILD_ID")
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
@@ -16,6 +17,12 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents, sync_commands=True)
+
+with open("genres.json", "r", encoding="utf-8") as f:
+    GENRES = json.load(f)
+
+def find_genre_id(user_input: str):
+    return GENRES.get(user_input.lower())
 
 def get_random_movie(genre_id=None):
     params = {
@@ -52,32 +59,26 @@ async def check_permissions(ctx, embed=False):
         return False
     return True
 
-@bot.slash_command(name="ping", description="Responde Pong!", guild_ids=[GUILD_ID])
-async def ping(ctx):
-    if await check_permissions(ctx):
-        await ctx.respond("🏓 Pong!")
+async def genre_autocomplete(ctx: discord.AutocompleteContext):
+    typed = ctx.value.lower()
+    suggestions = [g for g in GENRES.keys() if typed in g.lower()]
+    return suggestions[:25]
 
-@bot.slash_command(name="randommovie", description="Sorteia um filme aleatório", guild_ids=[GUILD_ID])
+@bot.slash_command(name="randommovie", description="Sorteia um filme aleatório")
+@option("genre", description="Escolha o gênero do filme", autocomplete=genre_autocomplete, required=False)
 async def randommovie(ctx, genre: str = None):
     if not await check_permissions(ctx, embed=True):
         return
 
-    genre_id = None
-    if genre:
-        genres_url = f"{TMDB_BASE_URL}/genre/movie/list"
-        genres_resp = requests.get(
-            genres_url, params={"api_key": TMDB_API_KEY, "language": "en-US"}
-        ).json()
-        genres = {g["name"].lower(): g["id"] for g in genres_resp["genres"]}
-        genre_id = genres.get(genre.lower())
-        if not genre_id:
-            await ctx.respond(f"❌ Gênero **{genre}** não encontrado!")
-            return
+    genre_id = find_genre_id(genre) if genre else None
+    if genre and not genre_id:
+        await ctx.respond(f"❌ Gênero **{genre}** não encontrado!")
+        return
 
     movie = get_random_movie(genre_id)
     if movie:
         title = movie["title"]
-        overview = movie.get("overview", "Sem descrição disponível.")
+        overview = movie.get("overview", "No description available.")
         poster_path = movie.get("poster_path")
         poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None
 
@@ -87,6 +88,6 @@ async def randommovie(ctx, genre: str = None):
 
         await ctx.respond(embed=embed)
     else:
-        await ctx.respond("❌ Não encontrei nenhum filme. Tente novamente!")
+        await ctx.respond("❌ No movies found. Try again!")
 
 bot.run(DISCORD_TOKEN)
