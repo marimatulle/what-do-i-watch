@@ -6,6 +6,7 @@ import json
 from discord.ext import commands
 from discord import option
 from dotenv import load_dotenv
+from keep_alive import keep_alive
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -17,6 +18,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents, sync_commands=True)
+
+keep_alive()
 
 with open("genres.json", "r", encoding="utf-8") as f:
     GENRES = json.load(f)
@@ -63,6 +66,11 @@ async def genre_autocomplete(ctx: discord.AutocompleteContext):
     typed = ctx.value.lower()
     suggestions = [g for g in GENRES.keys() if typed in g.lower()]
     return suggestions[:25]
+
+@bot.slash_command(name="ping", description="Responde Pong!")
+async def ping(ctx):
+    if await check_permissions(ctx):
+        await ctx.respond("🏓 Pong!")
 
 @bot.slash_command(name="randommovie", description="Sorteia um filme aleatório")
 @option("genre", description="Escolha o gênero do filme", autocomplete=genre_autocomplete, required=False)
