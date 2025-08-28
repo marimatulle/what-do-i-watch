@@ -1,5 +1,5 @@
-# 🎬 Random Movie Discord Bot
-A Discord bot that helps you discover movies randomly, either from all genres or a specific genre, using the TMDB (The Movie Database) API.
+# 🎬 What Do I Watch
+What Do I Watch is a Discord bot that helps you discover movies randomly, either from all genres or a specific genre, using the TMDB (The Movie Database) API.
 
 ---
 
